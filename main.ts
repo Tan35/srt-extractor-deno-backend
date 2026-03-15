@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { cors } from "hono/cors";
+import { cors } from "hono/middleware.ts";
 
 const app = new Hono();
 
@@ -196,14 +196,19 @@ async function transcribeWithDeepgram(
   let srtContentTraditional: string | undefined;
 
   if (detectedLanguage.toLowerCase().startsWith("zh")) {
-    const { convertToTraditional } = await import(
-      "https://cdn.jsdelivr.net/npm/opencc-js@1.0.2/dist/opencc.min.js"
-    );
-    segmentsTraditional = segments.map((seg) => ({
-      ...seg,
-      text: convertToTraditional(seg.text),
-    }));
-    srtContentTraditional = buildSrtContent(segmentsTraditional);
+    try {
+      const OpenCC = await import(
+        "https://cdn.jsdelivr.net/npm/opencc-js@1.0.2/dist/opencc.min.js"
+      );
+      const convertToTraditional = (OpenCC as any).convertToTraditional;
+      segmentsTraditional = segments.map((seg) => ({
+        ...seg,
+        text: convertToTraditional(seg.text),
+      }));
+      srtContentTraditional = buildSrtContent(segmentsTraditional);
+    } catch (e) {
+      console.warn("[Deepgram] Failed to load OpenCC for traditional conversion:", e);
+    }
   }
 
   return {
@@ -275,14 +280,19 @@ async function transcribeWithWhisper(
   let srtContentTraditional: string | undefined;
 
   if (detectedLanguage.toLowerCase().startsWith("zh")) {
-    const { convertToTraditional } = await import(
-      "https://cdn.jsdelivr.net/npm/opencc-js@1.0.2/dist/opencc.min.js"
-    );
-    segmentsTraditional = segments.map((seg) => ({
-      ...seg,
-      text: convertToTraditional(seg.text),
-    }));
-    srtContentTraditional = buildSrtContent(segmentsTraditional);
+    try {
+      const OpenCC = await import(
+        "https://cdn.jsdelivr.net/npm/opencc-js@1.0.2/dist/opencc.min.js"
+      );
+      const convertToTraditional = (OpenCC as any).convertToTraditional;
+      segmentsTraditional = segments.map((seg) => ({
+        ...seg,
+        text: convertToTraditional(seg.text),
+      }));
+      srtContentTraditional = buildSrtContent(segmentsTraditional);
+    } catch (e) {
+      console.warn("[Whisper] Failed to load OpenCC for traditional conversion:", e);
+    }
   }
 
   return {
